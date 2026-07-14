@@ -6,49 +6,90 @@ import { useDebounce } from '../hooks/useDebounce';
 export default function Catalog() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const [sort, setSort] = useState('newest');
   const [isListView, setIsListView] = useState(false);
 
-  // ✅ Hooks are now properly declared inside the component body
   const debouncedSearch = useDebounce(search, 400);
 
-  // Simulation data injection for isolated runtime fallback protection
+  // Helper function to cleanly format numbers into Malawian Kwacha (MK)
+  const formatToKwacha = (amount) => {
+    const numericValue = parseFloat(amount);
+    if (isNaN(numericValue)) return 'MK 0.00';
+    
+    return 'MK ' + numericValue.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  // Fetch products directly from our live Neon-backed API
   useEffect(() => {
-    setLoading(true);
-    const delay = setTimeout(() => {
-      const mockData = Array.from({ length: 8 }).map((_, i) => ({
-        id: `c_${i}`,
-        name: `Asset Profile Signature ${String.fromCharCode(65 + i)}00x`,
-        slug: `asset-profile-signature-${String.fromCharCode(65 + i).toLowerCase()}00x`,
-        price: 299.00 + (i * 120),
-        category: i % 2 === 0 ? "Executive Portfolio" : "Industrial Core",
-        description: "Optimized corporate hardware baseline engineered to satisfy intense structural and performance parameters flawlessly.",
-        imageUrl: `https://images.unsplash.com/photo-${["1523275335684-37898b6baf30", "1505740420928-5e560c06d30e"][i % 2]}?q=80&w=600&auto=format&fit=crop`
-      }));
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch('http://localhost:5000/api/products');
+        if (!response.ok) {
+          throw new Error('Failed to fetch catalog listings from database.');
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // Normalize image formats dynamically and apply MK currency formatting
+          const formattedProducts = result.data.map(product => {
+            const primaryImg = product.images.find(img => img.is_primary) || product.images[0];
+            return {
+              ...product,
+              rawPrice: parseFloat(product.price), // Keep as number for numerical sorting
+              formattedPrice: formatToKwacha(product.price), // Hand off formatted string to card
+              imageUrl: primaryImg ? primaryImg.image_url : 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=600'
+            };
+          });
 
-      // Apply client-side filters using our debounced value to prevent stuttering
-      const filteredData = mockData.filter(product => {
-        const matchesSearch = product.name.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
-                              product.description.toLowerCase().includes(debouncedSearch.toLowerCase());
-        const matchesCategory = category ? product.category.toLowerCase().includes(category.toLowerCase()) : true;
-        return matchesSearch && matchesCategory;
-      });
-
-      // Handle simple sorting
-      if (sort === 'price-low') {
-        filteredData.sort((a, b) => a.price - b.price);
-      } else if (sort === 'price-high') {
-        filteredData.sort((a, b) => b.price - a.price);
+          setProducts(formattedProducts);
+        }
+      } catch (err) {
+        console.error("API Fetch Error:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setProducts(filteredData);
-      setLoading(false);
-    }, 450);
+    fetchProducts();
+  }, []);
 
-    return () => clearTimeout(delay);
-  }, [debouncedSearch, category, sort]); // ✅ Listen to debouncedSearch here!
+  // Client-side filtering & sorting using state
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
+                          product.description.toLowerCase().includes(debouncedSearch.toLowerCase());
+    
+    const matchesCategory = category 
+      ? product.category_name?.toLowerCase() === category.toLowerCase() 
+      : true;
+
+    return matchesSearch && matchesCategory;
+  });
+
+  // Sort the filtered array using raw numeric prices before rendering
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sort === 'price-low') {
+      return a.rawPrice - b.rawPrice;
+    }
+    if (sort === 'price-high') {
+      return b.rawPrice - a.rawPrice;
+    }
+    // Default: Newest First (Sort by date or ID descending)
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+
+  // Extract unique category options dynamically from the loaded database products
+  const uniqueCategories = [...new Set(products.map(p => p.category_name).filter(Boolean))];
 
   return (
     <div className="min-h-screen bg-lightBg py-12 px-4 sm:px-6 lg:px-8">
@@ -58,7 +99,7 @@ export default function Catalog() {
           <p className="text-slate-500 text-sm">Deploy high-performance parameters to query structural assets seamlessly.</p>
         </div>
 
-        {/* Dynamic Context Multi-Filter Control Console Header Deck */}
+        {/* Multi-Filter Control Console Header Deck */}
         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-premium mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -78,8 +119,9 @@ export default function Catalog() {
               className="px-4 py-2.5 bg-lightBg rounded-xl text-sm font-medium focus:outline-none border border-transparent"
             >
               <option value="">All Segmentations</option>
-              <option value="executive">Executive Portfolio</option>
-              <option value="industrial">Industrial Core</option>
+              {uniqueCategories.map((cat, idx) => (
+                <option key={idx} value={cat}>{cat}</option>
+              ))}
             </select>
 
             <select 
@@ -101,7 +143,14 @@ export default function Catalog() {
           </div>
         </div>
 
-        {/* Dynamic Execution Loop Grid UI Mapping */}
+        {/* Error Handling */}
+        {error && (
+          <div className="p-4 mb-6 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm text-center">
+            {error}. Make sure your Express server is running on port 5000.
+          </div>
+        )}
+
+        {/* Render Grid / List */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -110,7 +159,18 @@ export default function Catalog() {
           </div>
         ) : (
           <div className={isListView ? "flex flex-col gap-4" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8"}>
-            {products.map(p => <ProductCard key={p.id} product={p} />)}
+            {sortedProducts.map(p => (
+              <ProductCard 
+                key={p.id} 
+                product={{
+                  ...p,
+                  price: p.formattedPrice // Hands the correctly formatted "MK X,XXX.XX" string to your visual card
+                }} 
+              />
+            ))}
+            {sortedProducts.length === 0 && (
+              <p className="text-slate-400 col-span-full py-12 text-center text-sm">No assets found matching current criteria.</p>
+            )}
           </div>
         )}
       </div>

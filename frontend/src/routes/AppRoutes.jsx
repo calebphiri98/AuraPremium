@@ -49,38 +49,3 @@ export default function AppRoutes() {
     </AuthProvider>
   );
 }
-
-// import React, { lazy, Suspense } from 'react';
-// import { Routes, Route, Navigate } from 'react-router-dom';
-// import MainLayout from '../layouts/MainLayout';
-
-// // High-speed Route Chunk Loading with Premium Skeleton Screen Implementations
-// const Home = lazy(() => import('../pages/Home'));
-// const Catalog = lazy(() => import('../pages/Catalog'));
-// const ProductDetails = lazy(() => import('../pages/ProductDetails'));
-// const About = lazy(() => import('../pages/About'));
-// const Contact = lazy(() => import('../pages/Contact'));
-
-// const PageSkeletonLoader = () => (
-//   <div className="w-full min-h-[70vh] flex flex-col justify-center items-center gap-4 bg-lightBg">
-//     <div className="w-12 h-12 border-4 border-slate-200 border-t-secondary rounded-full animate-spin"></div>
-//     <p className="font-heading font-medium text-xs text-slate-400 uppercase tracking-widest animate-pulse">Loading Experience</p>
-//   </div>
-// );
-
-// export default function AppRoutes() {
-//   return (
-//     <Suspense fallback={<PageSkeletonLoader />}>
-//       <Routes>
-//         <Route path="/" element={<MainLayout />}>
-//           <Route index element={<Home />} />
-//           <Route path="catalog" element={<Catalog />} />
-//           <Route path="product/:slug" element={<ProductDetails />} />
-//           <Route path="about" element={<About />} />
-//           <Route path="contact" element={<Contact />} />
-//           <Route path="*" element={<Navigate to="/" replace />} />
-//         </Route>
-//       </Routes>
-//     </Suspense>
-//   );
-// }

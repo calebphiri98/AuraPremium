@@ -1,9 +1,18 @@
 import React from 'react';
-import { Eye, ArrowRight } from 'lucide-react';
+import { Eye, ArrowRight, MessageSquareCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function ProductCard({ product }) {
-  const { name, slug, price, description, category, imageUrl } = product;
+  const { name, slug, price, category, imageUrl } = product;
+
+  // Configuration for your business WhatsApp line
+  const WHATSAPP_NUMBER = "265995727978"; // Replace with your actual Malawian WhatsApp number (no + sign)
+  
+  // Create a clean, pre-filled WhatsApp message URL
+  const encodedMessage = encodeURIComponent(
+    `Hello! I'm interested in purchasing the *${name}* (${price}). Is this item available for order?`
+  );
+  const whatsAppUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
 
   return (
     <div className="group bg-white rounded-2xl overflow-hidden border border-slate-100 hover:border-slate-200/80 transition-all duration-300 shadow-premium hover:shadow-glass flex flex-col h-full">
@@ -17,9 +26,9 @@ export default function ProductCard({ product }) {
           className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
         />
         
-        {/* Category Badge overlay */}
+        {/* Category Badge overlay with safe fallback */}
         <span className="absolute top-4 left-4 bg-white/90 backdrop-blur-md text-primary font-heading font-semibold text-[10px] tracking-wider uppercase px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm">
-          {category}
+          {category || "Premium Asset"}
         </span>
 
         {/* Premium Quick View Action Overlay */}
@@ -35,26 +44,35 @@ export default function ProductCard({ product }) {
       </div>
 
       {/* Content & Layout Specifications */}
-      <div className="p-5 flex flex-col flex-grow">
-        <div className="flex justify-between items-start gap-2 mb-2">
-          <h3 className="font-heading font-bold text-base text-slate-900 group-hover:text-secondary transition-colors duration-200 line-clamp-1">
-            <Link to={`/product/${slug}`}>{name}</Link>
-          </h3>
-          <span className="font-heading font-bold text-base text-slate-900 whitespace-nowrap">
-            ${Number(price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </span>
+      <div className="p-5 flex flex-col flex-grow justify-between">
+        <div>
+          <div className="flex justify-between items-start gap-4 mb-5">
+            <h3 className="font-heading font-bold text-base text-slate-900 group-hover:text-secondary transition-colors duration-200 line-clamp-2 leading-snug">
+              <Link to={`/product/${slug}`}>{name}</Link>
+            </h3>
+            <span className="font-heading font-bold text-base text-slate-900 whitespace-nowrap">
+              {price}
+            </span>
+          </div>
         </div>
 
-        <p className="text-slate-500 text-xs leading-relaxed font-normal line-clamp-2 mb-5 flex-grow">
-          {description}
-        </p>
+        {/* Dynamic Action Zone: Instant Checkout & Exploration Link */}
+        <div className="flex flex-col gap-3 pt-4 border-t border-slate-50/80">
+          <a
+            href={whatsAppUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-heading font-bold text-xs py-3 px-4 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2"
+          >
+            {/* Custom WhatsApp Icon / Chat Icon */}
+            <MessageSquareCheck className="w-4 h-4" /> Place Order via WhatsApp
+          </a>
 
-        <div className="pt-4 border-t border-slate-50/80 flex items-center justify-between">
           <Link
             to={`/product/${slug}`}
-            className="inline-flex items-center gap-1.5 font-heading font-semibold text-xs text-primary group-hover:text-secondary transition-colors duration-200"
+            className="inline-flex items-center justify-center gap-1.5 font-heading font-semibold text-xs text-slate-500 hover:text-primary transition-colors duration-200 py-1"
           >
-            Explore Options
+            View Details
             <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1" />
           </Link>
         </div>

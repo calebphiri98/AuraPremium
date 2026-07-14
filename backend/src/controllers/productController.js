@@ -1,129 +1,106 @@
-import * as db from '../config/db.js';
+// backend/src/controllers/productController.js
+import { query } from '../config/db.js';
 
-/**
- * Creates a product with atomicity. Uses explicit PostgreSQL 
- * transactions to ensure consistency between products and images.
- */
-export const createProduct = async (req, res, next) => {
-  const client = await db.default.connect();
-  try {
-    await client.query('BEGIN');
-    
-    const { category_id, name, description, price, stock, featured, specifications } = req.body;
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-
-    const productQuery = `
-      INSERT INTO products (category_id, name, slug, description, price, stock, featured, specifications)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING *;
-    `;
-    const productResult = await client.query(productQuery, [
-      category_id || null, name, slug, description, price, stock || 0, featured || false, specifications || '{}'
-    ]);
-    const product = productResult.rows[0];
-
-    // Process file buffers if injected via multipart channel
-    if (req.files && req.files.length > 0) {
-      const imageQuery = `
-        INSERT INTO product_images (product_id, image_url, display_order, is_primary)
-        VALUES ($1, $2, $3, $4);
-      `;
-      for (let i = 0; i < req.files.length; i++) {
-        // Base64 encoding for local fallback simulation; production should pipe to bucket URL
-        const dataUri = `data:${req.files[i].mimetype};base64,${req.files[i].buffer.toString('base64')}`;
-        await client.query(imageQuery, [product.id, dataUri, i, i === 0]);
-      }
-    }
-
-    await client.query('COMMIT');
-    res.status(201).json({ success: true, data: product });
-  } catch (error) {
-    await client.query('ROLLBACK');
-    next(error);
-  } finally {
-    client.release();
-  }
-};
-
-/**
- * High-performance advanced query block filtering engine with parameterized SQL conditions.
- */
+// @desc    Get all products with primary images and category details
+// @route   GET /api/products
+// @access  Public
 export const getProducts = async (req, res, next) => {
   try {
-    const { category, search, minPrice, maxPrice, sort, page = 1, limit = 12 } = req.query;
-    const offset = (page - 1) * limit;
-    
-    let queryText = `
-      SELECT p.*, c.name as category_name,
-      (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY is_primary DESC, display_order ASC LIMIT 1) as primary_image
+    const sqlQuery = `
+      SELECT 
+        p.id,
+        p.name,
+        p.slug,
+        p.description,
+        p.specifications,
+        p.price,
+        p.stock,
+        p.featured,
+        p.created_at,
+        c.name AS category_name,
+        c.slug AS category_slug,
+        -- Aggregates all related images into a structured JSON array
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', pi.id,
+              'image_url', pi.image_url,
+              'is_primary', pi.is_primary,
+              'display_order', pi.display_order
+            ) ORDER BY pi.display_order ASC
+          ) FILTER (WHERE pi.id IS NOT NULL), 
+          '[]'::json
+        ) AS images
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
-      WHERE 1=1
+      LEFT JOIN product_images pi ON p.id = pi.product_id
+      GROUP BY p.id, c.id
+      ORDER BY p.created_at DESC;
     `;
-    const params = [];
-    let paramIndex = 1;
 
-    if (category) {
-      queryText += ` AND c.slug = $${paramIndex}`;
-      params.push(category);
-      paramIndex++;
-    }
-
-    if (search) {
-      queryText += ` AND (p.name ILIKE $${paramIndex} OR p.description ILIKE $${paramIndex})`;
-      params.push(`%${search}%`);
-      paramIndex++;
-    }
-
-    if (minPrice) {
-      queryText += ` AND p.price >= $${paramIndex}`;
-      params.push(minPrice);
-      paramIndex++;
-    }
-
-    if (maxPrice) {
-      queryText += ` AND p.price <= $${paramIndex}`;
-      params.push(maxPrice);
-      paramIndex++;
-    }
-
-    // Dynamic sort matrix matching business criteria securely
-    const sortMatrix = {
-      newest: 'ORDER BY p.created_at DESC',
-      oldest: 'ORDER BY p.created_at ASC',
-      'price-low': 'ORDER BY p.price ASC',
-      'price-high': 'ORDER BY p.price DESC'
-    };
-    queryText += ` ${sortMatrix[sort] || 'ORDER BY p.created_at DESC'}`;
-
-    queryText += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-    params.push(parseInt(limit), offset);
-
-    const result = await db.query(queryText, params);
-    res.status(200).json({ success: true, count: result.rows.length, data: result.rows });
+    const result = await query(sqlQuery);
+    
+    res.status(200).json({
+      success: true,
+      count: result.rows.length,
+      data: result.rows
+    });
   } catch (error) {
     next(error);
   }
 };
 
-/**
- * Gets a product by slug, returning its image array sub-tables.
- */
+// @desc    Get a single product by Slug (better for SEO/URLs than raw IDs)
+// @route   GET /api/products/:slug
+// @access  Public
 export const getProductBySlug = async (req, res, next) => {
   try {
     const { slug } = req.params;
-    const productResult = await db.query('SELECT * FROM products WHERE slug = $1', [slug]);
     
-    if (productResult.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'Resource distribution index error: Product not located.' });
-    }
+    const sqlQuery = `
+      SELECT 
+        p.id,
+        p.name,
+        p.slug,
+        p.description,
+        p.specifications,
+        p.price,
+        p.stock,
+        p.featured,
+        p.created_at,
+        p.updated_at,
+        c.name AS category_name,
+        c.slug AS category_slug,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', pi.id,
+              'image_url', pi.image_url,
+              'is_primary', pi.is_primary,
+              'display_order', pi.display_order
+            ) ORDER BY pi.display_order ASC
+          ) FILTER (WHERE pi.id IS NOT NULL), 
+          '[]'::json
+        ) AS images
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN product_images pi ON p.id = pi.product_id
+      WHERE p.slug = $1
+      GROUP BY p.id, c.id;
+    `;
 
-    const product = productResult.rows[0];
-    const imagesResult = await db.query('SELECT * FROM product_images WHERE product_id = $1 ORDER BY display_order ASC', [product.id]);
+    const result = await query(sqlQuery, [slug]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Product not found'
+      });
+    }
 
     res.status(200).json({
       success: true,
-      data: { ...product, images: imagesResult.rows }
+      data: result.rows[0]
     });
   } catch (error) {
     next(error);

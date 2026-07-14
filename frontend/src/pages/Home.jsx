@@ -1,24 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
-import { motion } from 'framer-motion';
-import { ShieldCheck, Truck, Headphones, Layers, CircleCheck, ArrowUpRight, HelpCircle, Lock } from 'lucide-react';
+import { ShieldCheck, Truck, Headphones, Layers, ArrowUpRight, HelpCircle, Lock } from 'lucide-react';
 import ExpandableGrid from '../components/ExpandableGrid';
 import ProductCard from '../components/ProductCard';
-
-// Comprehensive high-fidelity mock dataset modeling data expected from Phase 3 Backend Engine APIs
-const MOCK_HOMEPAGE_PRODUCTS = Array.from({ length: 14 }).map((_, i) => ({
-  id: `prod_${i + 1}`,
-  name: `Premium Enterprise Asset ${String.fromCharCode(65 + i)}00x`,
-  slug: `premium-enterprise-asset-${String.fromCharCode(65 + i).toLowerCase()}00x`,
-  price: 249.99 + (i * 75),
-  category: i % 2 === 0 ? "Executive Portfolio" : "Industrial Core",
-  description: "Engineered using high-fidelity specifications optimized to ensure elite tier structural performance thresholds across long cycles.",
-  imageUrl: `https://images.unsplash.com/photo-${[
-    "1523275335684-37898b6baf30", "1505740420928-5e560c06d30e", "1542291026-7eec264c27ff", 
-    "1572635196237-14b3f281503f", "1560343090-f0409e92791a", "1526170375885-4d8ecf77b99f"
-  ][i % 6]}?q=80&w=600&auto=format&fit=crop`
-}));
 
 const FAQ_DATA = [
   { q: "How are products verified for quality guarantee thresholds?", a: "Every single asset under custody passes through rigorous engineering specifications and validation criteria prior to secure logistics initialization." },
@@ -27,6 +12,38 @@ const FAQ_DATA = [
 ];
 
 export default function Home() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real database records to show in our home grid
+  useEffect(() => {
+    const fetchHomeProducts = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/products');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            // Map/normalize dynamic imagery from nested db results
+            const formatted = result.data.map(p => {
+              const primaryImg = p.images.find(img => img.is_primary) || p.images[0];
+              return {
+                ...p,
+                imageUrl: primaryImg ? primaryImg.image_url : 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=600'
+              };
+            });
+            setProducts(formatted);
+          }
+        }
+      } catch (err) {
+        console.error("Failed loading homepage collections:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHomeProducts();
+  }, []);
+
   return (
     <div className="w-full bg-white">
       <SEO 
@@ -69,7 +86,6 @@ export default function Home() {
                 <div>✓ 24/7 Corporate SLA</div>
               </div>
               
-              {/* Added subtle Admin Login link */}
               <Link to="/admin/login" className="inline-flex items-center gap-1.5 text-slate-400 hover:text-primary transition-colors py-1 px-2 rounded-md hover:bg-slate-100/50">
                 <Lock className="w-3.5 h-3.5" /> Staff Console
               </Link>
@@ -106,7 +122,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SECTION 3 & 4: FEATURED SECTIONS WITH EXPANDABLE GRID CRITICAL LOGIC */}
+      {/* SECTION 3 & 4: FEATURED SECTIONS WITH EXPANDABLE GRID */}
       <section className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center text-center max-w-2xl mx-auto mb-16">
           <h2 className="font-heading font-bold text-3xl sm:text-4xl tracking-tight mb-4">
@@ -117,12 +133,20 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Integration of our Custom Reusable Expandable Grid Component */}
-        <ExpandableGrid 
-          items={MOCK_HOMEPAGE_PRODUCTS} 
-          initialCount={8} 
-          renderItem={(product) => <ProductCard product={product} />} 
-        />
+        {/* Dynamic Reusable Expandable Grid loaded straight from Neon Database */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-96 w-full bg-lightBg rounded-2xl animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <ExpandableGrid 
+            items={products} 
+            initialCount={8} 
+            renderItem={(product) => <ProductCard product={product} />} 
+          />
+        )}
       </section>
 
       {/* SECTION 6: WHY CHOOSE US ASSURANCES */}
@@ -181,7 +205,6 @@ export default function Home() {
               Initialize Engagement Matrix <ArrowUpRight className="w-4 h-4 text-primary" />
             </Link>
             
-            {/* Added alternative access path for administrators */}
             <Link to="/admin/login" className="inline-flex items-center gap-2 bg-slate-800/80 text-slate-300 border border-slate-700 font-heading font-bold text-xs uppercase tracking-wider px-8 py-4 rounded-xl hover:bg-slate-800 hover:text-white transition-all">
               <ShieldCheck className="w-4 h-4 text-secondary" /> Administrative Login
             </Link>
