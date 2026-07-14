@@ -1,0 +1,11 @@
+@import "tailwindcss";
+@theme {
+  --color-primary: #0F172A;
+  --color-secondary: #0284C7;
+  --color-accent: #F59E0B;
+  --color-lightBg: #F8FAFC;
+  --color-error: #EF4444;
+  --color-success: #22C55E;
+
+  --font-sans: "Inter", sans-serif;
+  --font-heading: "Cabinet Grotesk", sans-serif;}
