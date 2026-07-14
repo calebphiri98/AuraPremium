@@ -14,7 +14,6 @@ export default function Catalog() {
 
   const debouncedSearch = useDebounce(search, 400);
 
-  // Helper function to cleanly format numbers into Malawian Kwacha (MK)
   const formatToKwacha = (amount) => {
     const numericValue = parseFloat(amount);
     if (isNaN(numericValue)) return 'MK 0.00';
@@ -25,7 +24,6 @@ export default function Catalog() {
     });
   };
 
-  // Fetch products directly from our live Neon-backed API
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -39,20 +37,22 @@ export default function Catalog() {
         
         const result = await response.json();
         
-        if (result.success) {
-          // Normalize image formats dynamically and apply MK currency formatting
-          const formattedProducts = result.data.map(product => {
-            const primaryImg = product.images.find(img => img.is_primary) || product.images[0];
-            return {
-              ...product,
-              rawPrice: parseFloat(product.price), // Keep as number for numerical sorting
-              formattedPrice: formatToKwacha(product.price), // Hand off formatted string to card
-              imageUrl: primaryImg ? primaryImg.image_url : 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=600'
-            };
-          });
+        // Handle both raw array responses or { success: true, data: [...] } responses
+        const productsArray = Array.isArray(result) ? result : (result?.data || []);
 
-          setProducts(formattedProducts);
-        }
+        const formattedProducts = productsArray.map(product => {
+          const images = product.images || [];
+          const primaryImg = images.find(img => img.is_primary) || images[0];
+          
+          return {
+            ...product,
+            rawPrice: parseFloat(product.price || 0),
+            formattedPrice: formatToKwacha(product.price),
+            imageUrl: primaryImg ? primaryImg.image_url : 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=600'
+          };
+        });
+
+        setProducts(formattedProducts);
       } catch (err) {
         console.error("API Fetch Error:", err);
         setError(err.message);
@@ -64,10 +64,9 @@ export default function Catalog() {
     fetchProducts();
   }, []);
 
-  // Client-side filtering & sorting using state
   const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
-                          product.description.toLowerCase().includes(debouncedSearch.toLowerCase());
+    const matchesSearch = product.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) || 
+                          product.description?.toLowerCase().includes(debouncedSearch.toLowerCase());
     
     const matchesCategory = category 
       ? product.category_name?.toLowerCase() === category.toLowerCase() 
@@ -76,19 +75,12 @@ export default function Catalog() {
     return matchesSearch && matchesCategory;
   });
 
-  // Sort the filtered array using raw numeric prices before rendering
   const sortedProducts = [...filteredProducts].sort((a, b) => {
-    if (sort === 'price-low') {
-      return a.rawPrice - b.rawPrice;
-    }
-    if (sort === 'price-high') {
-      return b.rawPrice - a.rawPrice;
-    }
-    // Default: Newest First (Sort by date or ID descending)
+    if (sort === 'price-low') return a.rawPrice - b.rawPrice;
+    if (sort === 'price-high') return b.rawPrice - a.rawPrice;
     return new Date(b.created_at) - new Date(a.created_at);
   });
 
-  // Extract unique category options dynamically from the loaded database products
   const uniqueCategories = [...new Set(products.map(p => p.category_name).filter(Boolean))];
 
   return (
@@ -99,7 +91,6 @@ export default function Catalog() {
           <p className="text-slate-500 text-sm">Deploy high-performance parameters to query structural assets seamlessly.</p>
         </div>
 
-        {/* Multi-Filter Control Console Header Deck */}
         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-premium mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="relative w-full md:w-96">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -134,8 +125,6 @@ export default function Catalog() {
               <option value="price-high">Price: High to Low</option>
             </select>
 
-            <div className="h-9 w-[1px] bg-slate-200 hidden sm:block" />
-
             <div className="flex items-center bg-lightBg rounded-xl p-1">
               <button onClick={() => setIsListView(false)} className={`p-1.5 rounded-lg ${!isListView ? 'bg-white shadow-sm text-primary' : 'text-slate-400'}`}><Grid className="w-4 h-4" /></button>
               <button onClick={() => setIsListView(true)} className={`p-1.5 rounded-lg ${isListView ? 'bg-white shadow-sm text-primary' : 'text-slate-400'}`}><List className="w-4 h-4" /></button>
@@ -143,14 +132,12 @@ export default function Catalog() {
           </div>
         </div>
 
-        {/* Error Handling */}
         {error && (
           <div className="p-4 mb-6 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm text-center">
-            {error}. Make sure your Express server is running on port 5000.
+            {error}
           </div>
         )}
 
-        {/* Render Grid / List */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -164,7 +151,7 @@ export default function Catalog() {
                 key={p.id} 
                 product={{
                   ...p,
-                  price: p.formattedPrice // Hands the correctly formatted "MK X,XXX.XX" string to your visual card
+                  price: p.formattedPrice
                 }} 
               />
             ))}
