@@ -1,19 +1,28 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Lock, Mail } from 'lucide-react';
 
 export default function AdminLogin() {
   const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm();
-  const { login } = useAuth();
+  const { login, user } = useAuth(); // Access both login and the user state
   const navigate = useNavigate();
 
   const onSubmit = async (data) => {
     try {
       const success = await login(data.email, data.password);
+      
       if (success) {
-        navigate('/admin/dashboard');
+        // Retrieve the latest user info from the context or localStorage
+        const storedUser = JSON.parse(localStorage.getItem('auth_user'));
+        
+        // Conditional redirection based on role
+        if (storedUser && storedUser.role === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/cart');
+        }
       } else {
         setError('root', { message: 'Invalid authentication parameters provided.' });
       }
@@ -35,6 +44,7 @@ export default function AdminLogin() {
             <div className="p-3 bg-error/10 text-error rounded-xl text-xs font-semibold">{errors.root.message}</div>
           )}
           
+          {/* Email Input */}
           <div>
             <label className="block text-xs font-heading font-semibold text-slate-500 uppercase tracking-wider mb-2">Corporate Mail</label>
             <div className="relative">
@@ -49,6 +59,7 @@ export default function AdminLogin() {
             {errors.email && <p className="text-[11px] text-error mt-1">{errors.email.message}</p>}
           </div>
 
+          {/* Password Input */}
           <div>
             <label className="block text-xs font-heading font-semibold text-slate-500 uppercase tracking-wider mb-2">Secret Key</label>
             <div className="relative">
@@ -63,6 +74,7 @@ export default function AdminLogin() {
             {errors.password && <p className="text-[11px] text-error mt-1">{errors.password.message}</p>}
           </div>
 
+          {/* Submit Button */}
           <button 
             type="submit" 
             disabled={isSubmitting}
@@ -70,6 +82,13 @@ export default function AdminLogin() {
           >
             {isSubmitting ? 'Verifying Integrity...' : 'Authorize Credentials'}
           </button>
+
+          <p className="text-center text-xs text-slate-400 mt-4">
+            Need to establish administrative clearance?{' '}
+            <Link to="/admin/SignUp" className="text-primary font-semibold hover:underline">
+              Create Profile
+            </Link>
+          </p>
         </form>
       </div>
     </div>

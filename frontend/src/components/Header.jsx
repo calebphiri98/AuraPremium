@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ShoppingBag, Menu, X } from 'lucide-react';
+import { useCart } from '../context/CartContext'; // Connects to your cart state
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { cart } = useCart(); // Destructure cart items from your CartContext
   const location = useLocation();
+
+  // Calculate total items in cart dynamically
+  const cartItemCount = cart ? cart.reduce((total, item) => total + item.quantity, 0) : 0;
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -58,14 +63,34 @@ export default function Header() {
         </nav>
 
         {/* Global Functional Actions Layout */}
-        <div className="hidden md:flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-6">
+          {/* Desktop Cart Icon with Dynamic Badge */}
+          <Link to="/cart" className="relative p-2.5 text-slate-600 hover:text-primary hover:bg-slate-50 rounded-xl transition-all" aria-label="Shopping Cart">
+            <ShoppingBag className="w-6 h-6" />
+            {cartItemCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-secondary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white animate-bounce">
+                {cartItemCount}
+              </span>
+            )}
+          </Link>
+
           <Link to="/catalog" className="bg-primary hover:bg-slate-800 text-white font-semibold text-xs px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg">
             Procure Catalog
           </Link>
         </div>
 
-        {/* Mobile Architecture Trigger Controls */}
-        <div className="flex md:hidden items-center gap-3">
+        {/* Mobile Controls Layout */}
+        <div className="flex md:hidden items-center gap-2">
+          {/* Mobile Cart Icon with Dynamic Badge */}
+          <Link to="/cart" className="relative p-2 text-slate-600 hover:text-primary rounded-xl transition-all mr-1" aria-label="Shopping Cart">
+            <ShoppingBag className="w-6 h-6" />
+            {cartItemCount > 0 && (
+              <span className="absolute top-0 right-0 bg-secondary text-white text-[9px] font-bold w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white">
+                {cartItemCount}
+              </span>
+            )}
+          </Link>
+
           <button 
             onClick={() => setIsOpen(!isOpen)} 
             className="p-2 text-primary hover:bg-lightBg rounded-xl transition-colors focus:outline-none"

@@ -10,6 +10,7 @@ dotenv.config();
 import db from './src/config/db.js'; 
 
 // Router & Middleware Imports
+import orderRouter from './src/routes/orderRoutes.js';
 import productRouter from './src/routes/productRoutes.js';
 import userRouter from './src/routes/userRoutes.js';
 import errorHandler from './src/middleware/errorHandler.js';
@@ -17,13 +18,13 @@ import errorHandler from './src/middleware/errorHandler.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// 2. CORS Configurations (Explicitly whitelisting local React/Vite development ports)
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://your-vercel-frontend.vercel.app'] 
     : [
         'http://localhost:5173', 'http://127.0.0.1:5173',
-        'http://localhost:5174', 'http://127.0.0.1:5174'
+        'http://localhost:5174', 'http://127.0.0.1:5174',
+        'http://localhost:3000', 'http://127.0.0.1:3000' // Added port 3000
       ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -45,6 +46,7 @@ app.use('/api/', limiter);
 // 4. Routes
 app.use('/api/products', productRouter);
 app.use('/api/users', userRouter);
+app.use('/api/orders', orderRouter);
 
 // Health Check Route
 app.get('/api/health', (req, res) => {

@@ -1,54 +1,85 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../services/api';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('admin_token'));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (token) {
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      // In production, instantiate an immediate token verification request loop check here.
-      setUser({ role: 'admin', email: 'admin@mrgmwale.com' });
-    } else {
-      delete api.defaults.headers.common['Authorization'];
-      setUser(null);
+    const savedUser = localStorage.getItem('auth_user');
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        localStorage.removeItem('auth_user');
+      }
     }
     setLoading(false);
-  }, [token]);
+  }, []);
 
   const login = async (email, password) => {
-    // For standalone execution robustness without immediate database initialization:
-    if (email === 'admin@mrgmwale.com' && password === 'EnterpriseAdmin2026!') {
-      const fallbackToken = 'mock_jwt_token_signature';
-      localStorage.setItem('admin_token', fallbackToken);
-      setToken(fallbackToken);
-      return true;
-    }
+  try {
+    const response = await fetch('http://localhost:5000/api/users/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
     
-    const res = await api.post('/auth/login', { email, password });
-    if (res.data.success) {
-      localStorage.setItem('admin_token', res.data.token);
-      setToken(res.data.token);
+    const result = await response.json();
+    console.log("Full Login Response:", result); // ADD THIS LOG
+
+    if (result.success === true && result.user) {
+      setUser(result.user);
+      localStorage.setItem('auth_user', JSON.stringify(result.user));
       return true;
     }
     return false;
+  } catch (err) {
+    console.error("Login process error:", err);
+    throw err;
+  }
+};
+
+  const signup = async (name, email, password, role = 'user') => {
+    try {
+      // FIXED: Pointing to /api/users/register based on your server.js route configuration
+      const response = await fetch('http://localhost:5000/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, role })
+      });
+      
+      const result = await response.json();
+      
+      if (result.success && result.user) {
+        setUser(result.user);
+        localStorage.setItem('auth_user', JSON.stringify(result.user));
+        return true;
+      }
+      return result.success;
+    } catch (err) {
+      console.error("Signup error:", err);
+      throw err;
+    }
   };
 
   const logout = () => {
-    localStorage.removeItem('admin_token');
-    setToken(null);
     setUser(null);
+    localStorage.removeItem('auth_user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be wrapped inside an AuthProvider');
+  }
+  return context;
+};
