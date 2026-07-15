@@ -1,7 +1,7 @@
   import React, { useState, useEffect } from 'react';
   import { Plus, Trash2, Loader2 } from 'lucide-react';
 
-  // const API = 'http://localhost:5000/api';
+
   import {API} from '../../../src/config/api.js'
 
   export default function CategoriesPanel() {
