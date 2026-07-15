@@ -56,19 +56,14 @@ export default function Cart() {
         const WHATSAPP_NUMBER = "265995727978"; // Your WhatsApp number
         const itemsList = cart.map(item => `• ${item.quantity}x ${item.name} (${item.price})`).join('\n');
         
-        const message = `*Aura Store - Invoice Receipt*\n` +
-                        `-----------------------------\n` +
-                        `*Order ID:* #${orderId}\n` +
-                        `*Customer Name:* ${formData.name}\n` +
-                        `*Phone:* ${formData.phone}\n` +
-                        `*Delivery Destination:* ${formData.location}\n` +
-                        `-----------------------------\n` +
-                        `*Selected Items:*\n${itemsList}\n` +
-                        `-----------------------------\n` +
-                        `*Grand Total:* ${formatToKwacha(getCartTotal())}\n\n` +
-                        `Track your real-time status online at:\n${orderTrackingUrl}`;
-
-        // 3. Clear local cart
+      const message = 
+                
+                `Hi! I'd like to confirm availability for this order:\n\n` +
+                `*Order ID:* #${orderId}\n` +
+                
+                `*Selected Items:*\n${itemsList}\n` +
+                `-----------------------------\n` +
+                `*Estimated Total:* ${formatToKwacha(getCartTotal())}\n\n` 
         clearCart();
 
         // 4. Redirect to WhatsApp API and push user to Order Tracking page
