@@ -12,17 +12,8 @@ export default defineConfig({
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true, // Removes console.log() in production
+        drop_console: true,
         drop_debugger: true,
-      },
-    },
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          animation: ['framer-motion'],
-          ui: ['lucide-react', 'swiper'],
-        },
       },
     },
     chunkSizeWarningLimit: 600,
