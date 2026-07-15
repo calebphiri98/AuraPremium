@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { API } from '../config/api';
 
 const AuthContext = createContext(null);
 
@@ -20,7 +21,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
   try {
-    const response = await fetch('http://localhost:5000/api/users/login', {
+    const response = await fetch(`${API}/users/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
@@ -44,7 +45,7 @@ export function AuthProvider({ children }) {
   const signup = async (name, email, password, role = 'user') => {
     try {
       // FIXED: Pointing to /api/users/register based on your server.js route configuration
-      const response = await fetch('http://localhost:5000/api/users/register', {
+     const response = await fetch(`${API}/users/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, role })
