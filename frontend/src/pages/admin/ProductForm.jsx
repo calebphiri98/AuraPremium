@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Trash2, Loader2, ArrowLeft, Star, Upload } from 'lucide-react';
 
-const API = 'http://localhost:5000/api';
+import {API} from '../../../src/config/api.js'
 
 export default function ProductForm({ item, categories, onCancel, onSuccess }) {
   const isEdit = Boolean(item);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 
-const API = 'http://localhost:5000/api';
+import {API} from '../../../src/config/api.js'
 const STATUSES = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
 export default function OrdersPanel() {

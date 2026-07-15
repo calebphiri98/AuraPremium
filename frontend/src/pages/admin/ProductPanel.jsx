@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Loader2, Star } from 'lucide-react';
 import ProductForm from './ProductForm';
 
-const API = 'http://localhost:5000/api';
+import {API} from '../../../src/config/api.js'
 
 export default function ProductsPanel() {
   const [products, setProducts] = useState([]);

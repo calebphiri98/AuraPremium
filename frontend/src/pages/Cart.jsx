@@ -1,5 +1,6 @@
 // src/pages/Cart.jsx
 import React, { useState } from 'react';
+import { API } from '../config/api';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { Trash2, Plus, Minus, ArrowRight, MessageSquare, ShieldCheck } from 'lucide-react';
@@ -28,7 +29,7 @@ export default function Cart() {
     setIsSubmitting(true);
     try {
       // 1. Send the Order to your Backend API to save it in PostgreSQL/Neon database
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(`${API}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

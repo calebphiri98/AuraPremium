@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { MessageSquare, ExternalLink, Package } from 'lucide-react';
+import { API } from '../config/api';
 
 export default function ProductDetails() {
   const { slug } = useParams();
@@ -10,7 +11,7 @@ export default function ProductDetails() {
   const [activeImg, setActiveImg] = useState('');
 
   // CONFIG: Replace with your actual WhatsApp business number
-  const WHATSAPP_NUMBER = "265881234567"; 
+  const WHATSAPP_NUMBER = "265995727978"; 
 
   const handleInquiry = () => {
     const message = `Hello! I would like to inquire about the following product: ${product.name} (Ref: ${slug}). Is this item still available?`;
@@ -29,7 +30,7 @@ export default function ProductDetails() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`http://localhost:5000/api/products/${slug}`);
+        const response = await fetch(`${API}/products/${slug}`);
         if (!response.ok) throw new Error('This premium asset could not be retrieved.');
         const result = await response.json();
         if (result.success) {

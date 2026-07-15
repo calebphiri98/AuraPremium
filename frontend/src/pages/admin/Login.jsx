@@ -17,11 +17,16 @@ export default function AdminLogin() {
         // Retrieve the latest user info from the context or localStorage
         const storedUser = JSON.parse(localStorage.getItem('auth_user'));
         
+        // Debugging: Check if user and role are being retrieved correctly
+        console.log("Logged in user:", storedUser);
+        
         // Conditional redirection based on role
         if (storedUser && storedUser.role === 'admin') {
           navigate('/admin/dashboard');
         } else {
-          navigate('/cart');
+          // Changed from '/pages/cart' to '/cart'
+          // Ensure your route in App.js is set to path="/cart"
+          navigate('/cart'); 
         }
       } else {
         setError('root', { message: 'Invalid authentication parameters provided.' });
@@ -51,7 +56,7 @@ export default function AdminLogin() {
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input 
                 type="email" 
-                defaultValue="admin@mrgmwale.com"
+                defaultValue="email@gmail.com"
                 {...register('email', { required: 'Corporate identifier signature required' })}
                 className="w-full pl-10 pr-4 py-3 bg-lightBg border border-transparent rounded-xl text-sm focus:bg-white focus:border-slate-200 focus:outline-none transition-all"
               />

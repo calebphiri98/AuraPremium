@@ -1,11 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { ShieldCheck, Layers, ArrowUpRight } from 'lucide-react';
 import ExpandableGrid from '../components/ExpandableGrid';
 import ProductCard from '../components/ProductCard';
-
-const API_BASE_URL = 'http://localhost:5000';
+import { API } from '../config/api';
 
 export default function Home() {
   const [products, setProducts] = useState([]);
@@ -25,7 +25,7 @@ export default function Home() {
     const fetchHomeProducts = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/api/products`);
+        const response = await fetch(`${API}/products`);
         
         if (response.ok) {
           const result = await response.json();
@@ -125,14 +125,23 @@ export default function Home() {
       </section>
 
       {/* FOOTER CTA SECTION */}
+ {/* SECTION 10: CONVERSION CTA PLACEMENT BANNER */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
-        <div className="w-full bg-gradient-to-r from-primary to-slate-900 rounded-3xl p-8 md:p-16 text-center flex flex-col items-center">
-          <h2 className="font-heading font-bold text-2xl md:text-4xl text-white tracking-tight mb-4 max-w-xl">
+        <div className="w-full bg-gradient-to-r from-primary to-slate-900 rounded-3xl p-12 md:p-16 relative overflow-hidden text-center flex flex-col items-center">
+          <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-secondary/10 rounded-full blur-3xl -mr-20 -mt-20" />
+          <h2 className="font-heading font-bold text-3xl sm:text-4xl text-white tracking-tight mb-4 max-w-xl leading-snug">
             Ready To Upgrade Your Enterprise Inventory Footprint?
           </h2>
-          <div className="flex flex-col w-full sm:flex-row items-center justify-center gap-4 mt-4">
-            <Link to="/contact" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-primary font-heading font-bold text-xs uppercase px-8 py-4 rounded-xl hover:bg-slate-100 transition-all">
-              Initialize Engagement <ArrowUpRight className="w-4 h-4" />
+          <p className="text-slate-400 text-sm max-w-md mb-8">
+            Connect with a specialist now or request targeted catalog access configurations with customized high-volume asset pricing models.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <Link to="/contact" className="inline-flex items-center gap-2 bg-white text-primary font-heading font-bold text-xs uppercase tracking-wider px-8 py-4 rounded-xl hover:bg-slate-100 transition-all shadow-lg">
+              Initialize Engagement Matrix <ArrowUpRight className="w-4 h-4 text-primary" />
+            </Link>
+            
+            <Link to="/admin/login" className="inline-flex items-center gap-2 bg-slate-800/80 text-slate-300 border border-slate-700 font-heading font-bold text-xs uppercase tracking-wider px-8 py-4 rounded-xl hover:bg-slate-800 hover:text-white transition-all">
+              <ShieldCheck className="w-4 h-4 text-secondary" /> Administrative Login
             </Link>
           </div>
         </div>
@@ -149,3 +158,5 @@ export default function Home() {
     </div>
   );
 }
+
+

@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Loader2 } from 'lucide-react';
+  import React, { useState, useEffect } from 'react';
+  import { Plus, Trash2, Loader2 } from 'lucide-react';
 
-const API = 'http://localhost:5000/api';
+  // const API = 'http://localhost:5000/api';
+  import {API} from '../../../src/config/api.js'
 
-export default function CategoriesPanel() {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [name, setName] = useState('');
-  const [saving, setSaving] = useState(false);
+  export default function CategoriesPanel() {
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [name, setName] = useState('');
+    const [saving, setSaving] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
