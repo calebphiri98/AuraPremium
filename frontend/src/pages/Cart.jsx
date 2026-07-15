@@ -53,7 +53,7 @@ export default function Cart() {
         const orderTrackingUrl = `${window.location.origin}/track-order?orderId=${orderId}`;
 
         // 2. Format a professional invoice structured for WhatsApp
-        const WHATSAPP_NUMBER = "265888123456"; // Your WhatsApp number
+        const WHATSAPP_NUMBER = "265995727978"; // Your WhatsApp number
         const itemsList = cart.map(item => `• ${item.quantity}x ${item.name} (${item.price})`).join('\n');
         
         const message = `*Aura Store - Invoice Receipt*\n` +
